@@ -284,19 +284,40 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;height:56px;
 /* ── MODAL ── */
 .overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(20,20,20,.55);backdrop-filter:blur(4px);align-items:center;justify-content:center}
 .overlay.show{display:flex}
-.modal{background:#fff;border-radius:var(--rl);padding:30px;width:460px;max-width:92vw;box-shadow:var(--sh-lg);animation:mIn .2s ease}
+.modal{background:#fff;border-radius:var(--rl);padding:30px;width:560px;max-width:95vw;max-height:92vh;overflow-y:auto;box-shadow:var(--sh-lg);animation:mIn .2s ease}
 @keyframes mIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
-.modal h3{font-family:'Noto Serif SC',serif;font-size:18px;font-weight:700;margin-bottom:8px}
+.modal h3{font-family:'Noto Serif SC',serif;font-size:18px;font-weight:700;margin-bottom:6px}
 .modal-desc{font-size:13px;color:var(--ink-3);line-height:1.6;margin-bottom:18px}
-.modal-lbl{display:block;font-size:11px;font-weight:700;color:var(--ink-4);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.modal-lbl{display:block;font-size:11px;font-weight:700;color:var(--ink-4);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;margin-top:14px}
 .modal-inp{width:100%;padding:10px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink);background:var(--bg-sub);border:1px solid var(--border);border-radius:7px;outline:none;transition:border-color .15s}
 .modal-inp:focus{border-color:var(--seal)}
-.modal-hint{font-size:11px;color:var(--ink-4);margin-top:5px}
-.modal-acts{display:flex;gap:10px;margin-top:18px}
+.modal-hint{font-size:11px;color:var(--ink-4);margin-top:5px;line-height:1.55}
+.modal-acts{display:flex;gap:10px;margin-top:20px}
 .btn-cancel{flex:1;padding:10px;background:var(--bg-sub);border:1px solid var(--border);border-radius:7px;font-size:14px;cursor:pointer;font-family:inherit;color:var(--ink-3);transition:all .15s}
 .btn-cancel:hover{color:var(--ink)}
 .btn-save{flex:2;padding:10px;background:var(--ink);color:#fff;border:none;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s}
 .btn-save:hover{opacity:.82}
+
+/* 模型卡片选择器 */
+.model-section-title{font-size:11px;font-weight:700;color:var(--ink-4);letter-spacing:.08em;text-transform:uppercase;margin:16px 0 8px}
+.model-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
+.model-card{border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;cursor:pointer;transition:all .15s;background:#fff;position:relative}
+.model-card:hover{border-color:var(--ink-3);background:var(--bg-sub)}
+.model-card.selected{border-color:var(--seal);background:var(--seal-lt)}
+.model-card.recommended::after{content:'推荐';position:absolute;top:8px;right:10px;font-size:10px;font-weight:700;color:var(--jade);background:var(--jade-lt);border:1px solid #a8d8bf;padding:1px 6px;border-radius:4px}
+.model-card.free-tag::before{content:'免费额度';position:absolute;top:8px;right:10px;font-size:10px;font-weight:700;color:#b45309;background:#fef3c7;border:1px solid #fcd34d;padding:1px 6px;border-radius:4px}
+.model-card.recommended.free-tag::after{top:28px}
+.mc-name{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px}
+.mc-sub{font-size:11.5px;color:var(--ink-3);line-height:1.45}
+.mc-free{font-size:11px;color:var(--jade);margin-top:4px;font-weight:600}
+.model-card-custom{border:1.5px dashed var(--border);border-radius:10px;padding:10px 12px;cursor:pointer;transition:all .15s;background:#fff}
+.model-card-custom:hover,.model-card-custom.selected{border-color:var(--blue);background:var(--blue-lt)}
+.custom-fields{margin-top:10px;display:none}
+.custom-fields.show{display:block}
+.cf-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.divider-or{text-align:center;font-size:11px;color:var(--ink-4);margin:14px 0 10px;position:relative}
+.divider-or::before,.divider-or::after{content:'';position:absolute;top:50%;width:44%;height:1px;background:var(--border)}
+.divider-or::before{left:0}.divider-or::after{right:0}
 
 footer{text-align:center;padding:22px;font-size:12px;color:var(--ink-4);border-top:1px solid var(--border);margin-top:40px}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border-s);border-radius:3px}
@@ -318,7 +339,6 @@ footer{text-align:center;padding:22px;font-size:12px;color:var(--ink-4);border-t
 
 <!-- HERO -->
 <section class="hero">
-  <div class="badge">⚖ 《民法典》· 《劳动合同法》· 修订痕迹导出 · 扫描版OCR</div>
   <h1>合同风险，<em>一览无余</em></h1>
   <p>AI 逐条识别风险、生成修改建议，支持逐条接受或拒绝，一键导出带修订痕迹与批注的 Word 文档。</p>
   <div class="chips">
@@ -447,14 +467,76 @@ footer{text-align:center;padding:22px;font-size:12px;color:var(--ink-4);border-t
 <!-- API KEY MODAL -->
 <div class="overlay" id="overlay" onclick="oClick(event)">
   <div class="modal">
-    <h3>配置 Kimi API Key</h3>
-    <p class="modal-desc">前往 <a href="https://platform.moonshot.cn" target="_blank" style="color:var(--seal)">platform.moonshot.cn</a> 注册并获取 API Key。Key 仅保存在您的本地浏览器中，不上传任何服务器。</p>
-    <label class="modal-lbl">Moonshot API Key</label>
+    <h3>配置 AI 模型</h3>
+    <p class="modal-desc">选择下方任一模型，填入对应 API Key 即可开始使用。Key 仅保存在您的本地浏览器，不上传任何服务器。</p>
+
+    <!-- 推荐模型 -->
+    <div class="model-section-title">🎁 推荐 · 新用户免费额度</div>
+    <div class="model-cards">
+      <div class="model-card recommended free-tag" id="mc-deepseek" onclick="selectModel('deepseek')">
+        <div class="mc-name">DeepSeek</div>
+        <div class="mc-sub">deepseek-chat（V3）<br>逻辑推理强，合同分析首选</div>
+        <div class="mc-free">🎁 注册送 ~500万 tokens</div>
+      </div>
+      <div class="model-card free-tag" id="mc-qwen" onclick="selectModel('qwen')">
+        <div class="mc-name">通义千问（阿里云）</div>
+        <div class="mc-sub">qwen-plus / qwen-max<br>长文本强，中文理解优秀</div>
+        <div class="mc-free">🎁 新用户 100万 tokens·180天</div>
+      </div>
+      <div class="model-card free-tag" id="mc-kimi" onclick="selectModel('kimi')">
+        <div class="mc-name">Kimi（月之暗面）</div>
+        <div class="mc-sub">moonshot-v1-128k<br>超长上下文，支持扫描版OCR</div>
+        <div class="mc-free">🎁 注册送 15 元额度</div>
+      </div>
+      <div class="model-card free-tag" id="mc-zhipu" onclick="selectModel('zhipu')">
+        <div class="mc-name">智谱 GLM（清华系）</div>
+        <div class="mc-sub">glm-4-flash（永久免费）<br>中文法律文本理解较好</div>
+        <div class="mc-free">🎁 GLM-4-Flash 永久免费</div>
+      </div>
+    </div>
+
+    <div class="divider-or">或选择其他模型</div>
+
+    <!-- 其他主流模型 -->
+    <div class="model-cards">
+      <div class="model-card" id="mc-doubao" onclick="selectModel('doubao')">
+        <div class="mc-name">豆包（字节跳动）</div>
+        <div class="mc-sub">doubao-pro-32k<br>国内调用量最大，价格低</div>
+      </div>
+      <div class="model-card" id="mc-ernie" onclick="selectModel('ernie')">
+        <div class="mc-name">文心大模型（百度）</div>
+        <div class="mc-sub">ernie-4.5-8k<br>集成百度知识图谱</div>
+      </div>
+    </div>
+
+    <!-- 自定义 -->
+    <div class="model-card-custom" id="mc-custom" onclick="selectModel('custom')" style="margin-top:8px">
+      <div class="mc-name" style="font-size:13px;color:var(--ink-3)">⚙ 自定义（OpenAI 兼容接口）</div>
+    </div>
+
+    <!-- Key 输入区 -->
+    <label class="modal-lbl" id="key-section-lbl">API KEY</label>
     <input class="modal-inp" type="password" id="ki" placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx">
-    <div class="modal-hint">使用模型：moonshot-v1-128k（超长文本）· moonshot-v1-vision-preview（扫描 OCR）</div>
+    <div class="modal-hint" id="modal-hint-text"></div>
+
+    <!-- 自定义字段 -->
+    <div class="custom-fields" id="custom-fields">
+      <div class="cf-row" style="margin-top:10px">
+        <div>
+          <label class="modal-lbl">API Base URL</label>
+          <input class="modal-inp" type="text" id="custom-url" placeholder="https://api.example.com/v1">
+        </div>
+        <div>
+          <label class="modal-lbl">Model Name</label>
+          <input class="modal-inp" type="text" id="custom-model" placeholder="gpt-4o">
+        </div>
+      </div>
+      <div class="modal-hint">填入任何支持 OpenAI Chat Completions 格式的接口，如本地 Ollama、硅基流动、OpenRouter 等。</div>
+    </div>
+
     <div class="modal-acts">
       <button class="btn-cancel" onclick="closeModal()">取消</button>
-      <button class="btn-save" onclick="saveKey()">保存</button>
+      <button class="btn-save" onclick="saveKey()">保存并使用</button>
     </div>
   </div>
 </div>
@@ -473,13 +555,36 @@ window.__pdfjs=pdfjsLib;
 //  STATE
 // ════════════════════════════════════════════════
 var _key='', _persp='甲方', _fileTxt='', _stepTimers=[];
-var _reviewData=null;   // parsed AI JSON
-var _decisions={};      // {idx: 'accepted'|'rejected'}
+var _reviewData=null;
+var _decisions={};
 var _contractName='合同';
+// 模型配置
+var _modelId='deepseek'; // 当前选择的模型ID
+var _customUrl='', _customModel='';
 
-try{_key=localStorage.getItem('kimi_key')||'';}catch(e){}
+var MODEL_CONFIG={
+  deepseek:{name:'DeepSeek',baseUrl:'https://api.deepseek.com/v1',model:'deepseek-chat',visionModel:null,placeholder:'sk-xxxxxxxxxxxxxxxxxxxxxxxx',hint:'前往 platform.deepseek.com 注册获取。新用户注册送约 500 万 tokens 免费额度（限中国大陆）。'},
+  qwen:{name:'通义千问',baseUrl:'https://dashscope.aliyuncs.com/compatible-mode/v1',model:'qwen-plus',visionModel:'qwen-vl-plus',placeholder:'sk-xxxxxxxxxxxxxxxxxxxxxxxx',hint:'前往 bailian.aliyun.com 开通百炼服务后自动发放。新用户 100 万 tokens，有效期 180 天。'},
+  kimi:{name:'Kimi',baseUrl:'https://api.moonshot.cn/v1',model:'moonshot-v1-128k',visionModel:'moonshot-v1-vision-preview',placeholder:'sk-xxxxxxxxxxxxxxxxxxxxxxxx',hint:'前往 platform.moonshot.cn 注册获取。新用户注册送 15 元额度，支持扫描版 PDF · OCR。'},
+  zhipu:{name:'智谱 GLM',baseUrl:'https://open.bigmodel.cn/api/paas/v4',model:'glm-4-flash',visionModel:'glm-4v-flash',placeholder:'在 bigmodel.cn 获取',hint:'前往 bigmodel.cn 注册。GLM-4-Flash 永久免费，GLM-4V-Flash 免费支持图片识别（可用于 OCR）。'},
+  doubao:{name:'豆包',baseUrl:'https://ark.cn-beijing.volces.com/api/v3',model:'doubao-pro-32k',visionModel:null,placeholder:'在火山方舟控制台获取',hint:'前往 console.volcengine.com/ark 开通，需在控制台创建推理接入点并填写对应 endpoint ID 作为 model。'},
+  ernie:{name:'文心大模型',baseUrl:'https://qianfan.baidubce.com/v2',model:'ernie-4.5-8k',visionModel:null,placeholder:'在百度智能云获取',hint:'前往 console.bce.baidu.com/qianfan 注册，新用户 ERNIE-4.0 送 100 万 token/月，ERNIE-Speed/Lite 永久免费。'},
+  custom:{name:'自定义',baseUrl:'',model:'',visionModel:null,placeholder:'在对应平台获取 API Key',hint:'填入任何支持 OpenAI Chat Completions 格式（/v1/chat/completions）的接口地址和模型名称。'}
+};
+
+try{
+  var saved=JSON.parse(localStorage.getItem('ai_model_cfg')||'{}');
+  if(saved.key)_key=saved.key;
+  if(saved.modelId&&MODEL_CONFIG[saved.modelId])_modelId=saved.modelId;
+  if(saved.customUrl)_customUrl=saved.customUrl;
+  if(saved.customModel)_customModel=saved.customModel;
+}catch(e){}
+
 window.onload=function(){
-  if(_key){document.getElementById('dot').classList.add('ok');document.getElementById('key-lbl').textContent='API 已配置';}
+  if(_key){document.getElementById('dot').classList.add('ok');document.getElementById('key-lbl').textContent='已配置：'+MODEL_CONFIG[_modelId].name;}
+  // 右侧提示也根据模型更新
+  var ph=document.getElementById('rph');
+  if(ph){var pp=ph.querySelector('p');if(pp)pp.innerHTML='配置 AI 模型 API Key 后<br>粘贴合同内容或上传文件<br>点击「开始 AI 审核」获取修订报告';}
 };
 
 // ════════════════════════════════════════════════
@@ -500,18 +605,52 @@ function setP(btn,v){
 }
 function showErr(m){var e=document.getElementById('err');e.textContent=m;e.className='err show';}
 function hideErr(){document.getElementById('err').className='err';}
-function openModal(){document.getElementById('ki').value=_key;document.getElementById('overlay').classList.add('show');setTimeout(function(){document.getElementById('ki').focus();},100);}
+
+function selectModel(id){
+  _modelId=id;
+  // 更新选中样式
+  Object.keys(MODEL_CONFIG).forEach(function(k){
+    var el=document.getElementById('mc-'+k);
+    if(el){if(k===id)el.classList.add('selected');else el.classList.remove('selected');}
+  });
+  var cfg=MODEL_CONFIG[id];
+  document.getElementById('ki').placeholder=cfg.placeholder;
+  document.getElementById('modal-hint-text').textContent=cfg.hint;
+  // 自定义字段显示
+  var cf=document.getElementById('custom-fields');
+  if(id==='custom'){cf.classList.add('show');}else{cf.classList.remove('show');}
+}
+
+function openModal(){
+  // 恢复当前已保存状态
+  document.getElementById('ki').value=_key;
+  if(_customUrl)document.getElementById('custom-url').value=_customUrl;
+  if(_customModel)document.getElementById('custom-model').value=_customModel;
+  selectModel(_modelId);
+  document.getElementById('overlay').classList.add('show');
+  setTimeout(function(){document.getElementById('ki').focus();},100);
+}
 function closeModal(){document.getElementById('overlay').classList.remove('show');}
 function oClick(e){if(e.target===document.getElementById('overlay'))closeModal();}
+
 function saveKey(){
-  var k=document.getElementById('ki').value.trim();if(!k)return;
-  _key=k;try{localStorage.setItem('kimi_key',k);}catch(e){}
+  var k=document.getElementById('ki').value.trim();
+  if(!k){document.getElementById('ki').focus();return;}
+  if(_modelId==='custom'){
+    var u=document.getElementById('custom-url').value.trim();
+    var m=document.getElementById('custom-model').value.trim();
+    if(!u||!m){alert('请填写完整的 Base URL 和 Model Name');return;}
+    _customUrl=u;_customModel=m;
+  }
+  _key=k;
+  try{localStorage.setItem('ai_model_cfg',JSON.stringify({key:k,modelId:_modelId,customUrl:_customUrl,customModel:_customModel}));}catch(e){}
   document.getElementById('dot').classList.add('ok');
-  document.getElementById('key-lbl').textContent='API 已配置';
+  document.getElementById('key-lbl').textContent='已配置：'+MODEL_CONFIG[_modelId].name;
   closeModal();
 }
 window.switchTab=switchTab;window.onInput=onInput;window.setP=setP;
 window.openModal=openModal;window.closeModal=closeModal;window.oClick=oClick;window.saveKey=saveKey;
+window.selectModel=selectModel;
 
 // ════════════════════════════════════════════════
 //  FILE PARSING
@@ -579,7 +718,7 @@ async function processFile(file){
       }
       var digTxt=pages.join('\n\n').replace(/\s{3,}/g,'\n\n').trim();
       if(totalChars/Math.max(total,1)<30){
-        if(!_key){showErr('检测到扫描版 PDF，请先配置 API Key 以启用 AI·OCR');hidePP();return;}
+        if(!_key){showErr('检测到扫描版 PDF，请先配置 AI 模型 API Key 以启用 AI·OCR');hidePP();return;}
         _fileTxt=await ocrPdf(pdf,total);
       }else{_fileTxt=digTxt;showPP('PDF 解析完成 ✓',100);}
     }else if(ext==='xlsx'||ext==='xls'){
@@ -605,8 +744,11 @@ async function processFile(file){
 }
 
 async function ocrPdf(pdf,totalPages){
+  var cfg=MODEL_CONFIG[_modelId];
+  var visionModel=_modelId==='custom'?_customModel:(cfg.visionModel||cfg.model);
+  var baseUrl=_modelId==='custom'?_customUrl:cfg.baseUrl;
   showPP('扫描版 PDF，启动 AI·OCR…',80,true);
-  setOcrWarn('正在调用 Kimi 视觉模型逐页识别，约 '+Math.ceil(totalPages/3)+' 次请求…');
+  setOcrWarn('正在调用 '+cfg.name+' 视觉模型逐页识别，约 '+Math.ceil(totalPages/3)+' 次请求…');
   var allTexts=[];
   for(var b=1;b<=totalPages;b+=3){
     var end=Math.min(b+2,totalPages);
@@ -618,9 +760,9 @@ async function ocrPdf(pdf,totalPages){
       contents.push({type:'text',text:'以上是第 '+p+' 页。'});
     }
     contents.push({type:'text',text:'请将上述各页中的全部文字完整提取，保持排版顺序，只输出原文内容，不添加任何解释。'});
-    var res=await fetch('https://api.moonshot.cn/v1/chat/completions',{
+    var res=await fetch(baseUrl+'/chat/completions',{
       method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+_key},
-      body:JSON.stringify({model:'moonshot-v1-vision-preview',max_tokens:4096,temperature:0,
+      body:JSON.stringify({model:visionModel,max_tokens:4096,temperature:0,
         messages:[{role:'system',content:'你是专业OCR系统，准确提取图片中的文字，保持原始排版，不做任何修改。'},
                   {role:'user',content:contents}]})
     });
@@ -629,7 +771,7 @@ async function ocrPdf(pdf,totalPages){
     allTexts.push(d.choices[0].message.content);
   }
   showPP('OCR 完成 ✓  共 '+totalPages+' 页',100,true);
-  setOcrWarn('✅ 已通过 Kimi 视觉模型完成扫描版 PDF 识别');
+  setOcrWarn('✅ 已通过 '+cfg.name+' 视觉模型完成扫描版 PDF 识别');
   return allTexts.join('\n\n').replace(/\s{3,}/g,'\n\n').trim();
 }
 
@@ -664,9 +806,13 @@ function doneSteps(){_stepTimers.forEach(clearTimeout);for(var i=1;i<=6;i++){var
 async function doReview(){
   hideErr();
   var txt=document.getElementById('cta').value.trim()||_fileTxt;
-  if(!_key){showErr('请先配置 Kimi API Key');return;}
+  if(!_key){showErr('请先配置 AI 模型 API Key');openModal();return;}
   if(!txt||txt.length<30){showErr('请粘贴合同内容（≥30字）或上传文件');return;}
   if(txt.length>50000){showErr('内容超过 50,000 字，请截取关键部分');return;}
+
+  var cfg=MODEL_CONFIG[_modelId];
+  var baseUrl=_modelId==='custom'?_customUrl:cfg.baseUrl;
+  var modelName=_modelId==='custom'?_customModel:cfg.model;
 
   var typeMap={auto:'（自动识别）',labor:'劳动合同',sale:'买卖合同',lease:'租赁合同',
     loan:'借款合同',service:'服务合同',guarantee:'保证/担保合同',realty:'房屋买卖合同',other:'其他合同'};
@@ -681,11 +827,11 @@ async function doReview(){
   _reviewData=null;_decisions={};startSteps();
 
   try{
-    var res=await fetch('https://api.moonshot.cn/v1/chat/completions',{
+    var res=await fetch(baseUrl+'/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+_key},
       body:JSON.stringify({
-        model:'moonshot-v1-128k',max_tokens:8000,temperature:0.1,
+        model:modelName,max_tokens:8000,temperature:0.1,
         messages:[
           {role:'system',content:'你是一位执业15年以上的中国合同律师，精通《民法典》（2021施行版）《劳动合同法》及最高人民法院历年司法解释。你只输出要求的JSON格式，不输出任何其他内容。'},
           {role:'user',content:buildPrompt(txt,tl,pa,pb,_persp)}
@@ -704,7 +850,7 @@ async function doReview(){
     var msg=ex.message||'未知错误';
     if(msg.indexOf('401')>=0)msg='API Key 无效，请重新配置';
     else if(msg.indexOf('429')>=0)msg='请求频率过高，请稍后重试';
-    else if(msg.indexOf('fetch')>=0||msg.indexOf('Failed')>=0)msg='网络请求失败，请检查网络连接';
+    else if(msg.indexOf('fetch')>=0||msg.indexOf('Failed')>=0)msg='网络请求失败，请检查网络或接口地址是否正确';
     showErr('审核失败：'+msg);
     document.getElementById('go-btn').disabled=false;
   }
