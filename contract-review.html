@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>契审 · AI合同审核平台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.11.0/mammoth.browser.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<!-- JSZip：浏览器端生成 DOCX（ZIP包） -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<style>
+:root{
+  --bg:#f8f7f4;--bg-card:#fff;--bg-sub:#f2f0ec;
+  --ink:#1a1a1a;--ink-2:#3d3d3d;--ink-3:#6b6b6b;--ink-4:#9b9b9b;
+  --seal:#c0392b;--seal-lt:#fdf0ee;--seal-bd:#e8c4bf;
+  --gold:#b8860b;--gold-lt:#fdf8ee;
+  --jade:#1a6b4a;--jade-lt:#eef7f2;
+  --blue:#2563eb;--blue-lt:#eff6ff;
+  --border:#e5e2db;--border-s:#ccc9c2;
+  --sh-sm:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --sh-md:0 4px 16px rgba(0,0,0,.07),0 2px 6px rgba(0,0,0,.04);
+  --sh-lg:0 12px 40px rgba(0,0,0,.10),0 4px 12px rgba(0,0,0,.06);
+  --r:10px;--rl:16px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans','Noto Serif SC',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:56px;
+  background:rgba(248,247,244,.94);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 32px}
+.logo{display:flex;align-items:center;gap:10px;font-family:'Noto Serif SC',serif;font-size:18px;font-weight:700;letter-spacing:.02em}
+.logo-mark{width:28px;height:28px;background:var(--seal);border-radius:4px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700}
+.btn-key{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:6px;background:var(--ink);color:#fff;font-size:13px;font-weight:500;border:none;cursor:pointer;transition:opacity .15s;font-family:inherit}
+.btn-key:hover{opacity:.82}
+.dot-s{width:7px;height:7px;border-radius:50%;background:#aaa;transition:background .3s}
+.dot-s.ok{background:#22c55e}
+
+/* ── HERO ── */
+.hero{padding:112px 32px 52px;max-width:960px;margin:0 auto;text-align:center}
+.badge{display:inline-flex;align-items:center;background:var(--seal-lt);border:1px solid var(--seal-bd);color:var(--seal);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;margin-bottom:22px;letter-spacing:.04em}
+.hero h1{font-family:'Noto Serif SC',serif;font-size:clamp(32px,5vw,52px);font-weight:700;line-height:1.18;letter-spacing:-.01em;margin-bottom:16px}
+.hero h1 em{font-style:normal;color:var(--seal)}
+.hero p{font-size:15.5px;color:var(--ink-3);line-height:1.7;max-width:540px;margin:0 auto 32px}
+.chips{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin-bottom:44px}
+.chip{display:flex;align-items:center;gap:6px;background:var(--bg-card);border:1px solid var(--border);padding:7px 13px;border-radius:8px;font-size:13px;color:var(--ink-2);font-weight:500;box-shadow:var(--sh-sm)}
+
+/* ── LAYOUT ── */
+.wrap{max-width:1280px;margin:0 auto;padding:0 24px 80px}
+.grid{display:grid;grid-template-columns:420px 1fr;gap:20px;align-items:start}
+@media(max-width:960px){.grid{grid-template-columns:1fr}}
+
+/* ── PANEL ── */
+.panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--rl);box-shadow:var(--sh-md);overflow:hidden}
+.ph{padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ph-title{font-size:12.5px;font-weight:600;color:var(--ink-2);letter-spacing:.05em;text-transform:uppercase;display:flex;align-items:center;gap:7px}
+.ph-dot{width:6px;height:6px;border-radius:50%;background:var(--seal);flex-shrink:0}
+.pb{padding:18px 20px}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:2px;background:var(--bg-sub);border-radius:8px;padding:3px;margin-bottom:14px}
+.tab{flex:1;padding:7px 10px;font-size:13px;font-weight:500;color:var(--ink-3);cursor:pointer;border:none;background:none;border-radius:6px;transition:all .15s;font-family:inherit}
+.tab.on{background:#fff;color:var(--ink);box-shadow:var(--sh-sm)}
+
+/* ── TEXTAREA ── */
+.cta{width:100%;min-height:300px;padding:13px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;color:var(--ink-2);background:var(--bg-sub);border:1px solid var(--border);border-radius:var(--r);resize:vertical;outline:none;transition:border-color .15s}
+.cta:focus{border-color:var(--seal-bd)}
+.cta::placeholder{color:var(--ink-4)}
+.wc{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-4);margin-top:5px}
+
+/* ── FILE ZONE ── */
+#tab-file{display:none}
+.dropzone{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;border:2px dashed var(--border-s);border-radius:var(--r);cursor:pointer;padding:28px;transition:all .2s;background:var(--bg-sub);text-align:center}
+.dropzone:hover,.dropzone.over{border-color:var(--seal);background:var(--seal-lt)}
+.dz-icon{font-size:36px;margin-bottom:12px;opacity:.4}
+.dz-title{font-size:14px;color:var(--ink-2);font-weight:500;margin-bottom:5px}
+.dz-sub{font-size:12px;color:var(--ink-4);line-height:1.6}
+.fmt-badges{display:flex;gap:5px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+.fmt-badge{padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:.04em;border:1px solid}
+.fmt-badge.docx{background:#dbeafe;color:#1e40af;border-color:#bfdbfe}
+.fmt-badge.pdf{background:#fce7f3;color:#9d174d;border-color:#fbcfe8}
+.fmt-badge.xlsx{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+.fmt-badge.doc{background:#fef3c7;color:#92400e;border-color:#fde68a}
+.fmt-badge.csv{background:#f3e8ff;color:#6b21a8;border-color:#e9d5ff}
+#file-input{display:none}
+.file-loaded{display:none;align-items:center;gap:10px;padding:10px 13px;background:var(--jade-lt);border:1px solid #b8dece;border-radius:var(--r);margin-top:10px}
+.file-loaded.show{display:flex}
+.fl-name{font-size:13px;font-weight:600;color:var(--jade);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fl-size{font-size:11px;color:var(--ink-4)}
+.fl-clear{font-size:12px;color:var(--ink-4);cursor:pointer;padding:2px 6px;border-radius:4px;transition:background .15s}
+.fl-clear:hover{background:var(--seal-lt);color:var(--seal)}
+
+/* ── PARSE PROGRESS ── */
+.parse-prog{display:none;margin-top:10px;padding:10px 13px;background:var(--gold-lt);border:1px solid #e8d9a0;border-radius:var(--r)}
+.parse-prog.show{display:block}
+.parse-prog.ocr-mode{background:#f0f4ff;border-color:#c7d4f5}
+.pp-top{display:flex;align-items:center;justify-content:space-between}
+.pp-bar-wrap{height:4px;background:var(--border);border-radius:2px;margin-top:7px;overflow:hidden}
+.pp-bar{height:100%;background:var(--gold);border-radius:2px;transition:width .4s ease;width:0}
+.parse-prog.ocr-mode .pp-bar{background:#4f6ef7}
+.pp-msg{font-size:12px;color:var(--gold)}
+.parse-prog.ocr-mode .pp-msg{color:#3b54c9}
+.ocr-badge{display:none;font-size:10px;font-weight:700;letter-spacing:.05em;padding:2px 6px;border-radius:3px;background:#e8edff;color:#3b54c9;border:1px solid #c7d4f5}
+.parse-prog.ocr-mode .ocr-badge{display:inline-block}
+.ocr-warn{display:none;margin-top:7px;font-size:11.5px;color:#3b54c9;line-height:1.5}
+.parse-prog.ocr-mode .ocr-warn{display:block}
+
+/* ── META / PERSPECTIVE ── */
+.meta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-top:13px}
+.mf label{display:block;font-size:11px;font-weight:600;color:var(--ink-4);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px}
+.mf select,.mf input{width:100%;padding:8px 10px;font-size:13px;color:var(--ink);background:var(--bg-sub);border:1px solid var(--border);border-radius:6px;outline:none;font-family:inherit;transition:border-color .15s}
+.mf select:focus,.mf input:focus{border-color:var(--seal-bd)}
+.persp-lbl{font-size:11px;font-weight:600;color:var(--ink-4);letter-spacing:.06em;text-transform:uppercase;margin:13px 0 6px;display:block}
+.persp-row{display:flex;gap:7px}
+.pbtn{flex:1;padding:8px;font-size:12px;font-weight:600;color:var(--ink-3);cursor:pointer;border:1px solid var(--border);background:var(--bg-sub);border-radius:7px;transition:all .15s;font-family:inherit;text-align:center}
+.pbtn.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* ── ERR / SUBMIT ── */
+.err{display:none;margin-top:12px;padding:11px 13px;background:var(--seal-lt);border:1px solid var(--seal-bd);border-radius:var(--r);font-size:13px;color:var(--seal);line-height:1.6}
+.err.show{display:block}
+.btn-go{width:100%;padding:13px;background:var(--seal);color:#fff;font-size:15px;font-weight:600;border:none;border-radius:var(--r);cursor:pointer;margin-top:16px;font-family:'Noto Serif SC',serif;letter-spacing:.04em;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-go:hover:not(:disabled){background:#a93226;box-shadow:0 4px 14px rgba(192,57,43,.35)}
+.btn-go:disabled{opacity:.5;cursor:not-allowed}
+
+/* ── RESULT PANEL ── */
+.r-ph{padding:52px 20px;text-align:center}
+.r-ph .ico{font-size:48px;opacity:.12;margin-bottom:12px}
+.r-ph p{font-size:14px;color:var(--ink-4);line-height:1.7}
+.loading{display:none;padding:44px 20px;text-align:center}
+.loading.show{display:block}
+.spin{width:40px;height:40px;margin:0 auto 16px;border:3px solid var(--border);border-top-color:var(--seal);border-radius:50%;animation:rot .8s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+.steps{list-style:none;text-align:left;max-width:260px;margin:0 auto}
+.steps li{font-size:13px;color:var(--ink-4);padding:5px 0;display:flex;align-items:center;gap:8px}
+.steps li.on{color:var(--ink-2);font-weight:500}
+.steps li.done{color:var(--jade)}
+.sdot{width:6px;height:6px;border-radius:50%;background:var(--border-s);flex-shrink:0}
+.steps li.on .sdot{background:var(--seal)}
+.steps li.done .sdot{background:var(--jade)}
+.result-wrap{display:none}
+.result-wrap.show{display:block}
+
+/* ── OVERVIEW CARD ── */
+.ov{background:var(--bg-sub);border:1px solid var(--border);border-radius:var(--r);padding:15px;margin-bottom:16px}
+.ov-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:13px}
+.ov-name{font-family:'Noto Serif SC',serif;font-size:14px;font-weight:700}
+.ov-sub{font-size:12px;color:var(--ink-4);margin-top:3px}
+.score{font-size:24px;font-weight:700;font-family:'DM Sans',sans-serif;text-align:right}
+.score.h{color:var(--seal)}.score.m{color:var(--gold)}.score.l{color:var(--jade)}
+.score-lbl{font-size:11px;color:var(--ink-4)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.st{text-align:center;padding:9px 6px;background:#fff;border-radius:7px;border:1px solid var(--border)}
+.st-n{font-size:20px;font-weight:700}
+.st-l{font-size:11px;color:var(--ink-4);margin-top:2px}
+.st.d .st-n{color:var(--seal)}.st.w .st-n{color:var(--gold)}.st.g .st-n{color:var(--jade)}
+.ov-tip{font-size:12px;color:var(--ink-3);margin-top:11px;line-height:1.6}
+
+/* ── BATCH ACTIONS BAR ── */
+.batch-bar{display:flex;align-items:center;justify-content:space-between;
+  background:var(--blue-lt);border:1px solid #bfdbfe;border-radius:var(--r);
+  padding:10px 14px;margin-bottom:12px;gap:10px;flex-wrap:wrap}
+.batch-info{font-size:13px;color:var(--blue);font-weight:500}
+.batch-info span{font-weight:700}
+.batch-btns{display:flex;gap:7px}
+.bb{padding:6px 13px;font-size:12px;font-weight:600;border-radius:6px;cursor:pointer;border:none;font-family:inherit;transition:all .15s}
+.bb.accept-all{background:var(--jade);color:#fff}
+.bb.accept-all:hover{opacity:.85}
+.bb.reject-all{background:var(--bg-sub);color:var(--ink-3);border:1px solid var(--border-s)}
+.bb.reject-all:hover{background:var(--seal-lt);color:var(--seal);border-color:var(--seal-bd)}
+
+/* ── RISK ITEM ── */
+.sec{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin:18px 0 9px;display:flex;align-items:center;gap:6px}
+.ri{border:1px solid var(--border);border-radius:var(--r);margin-bottom:9px;overflow:hidden;transition:box-shadow .15s}
+.ri:hover{box-shadow:var(--sh-sm)}
+.ri-hd{display:flex;align-items:flex-start;gap:9px;padding:11px 13px;cursor:pointer;user-select:none}
+.rl{flex-shrink:0;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:.04em}
+.rl.high{background:var(--seal-lt);color:var(--seal)}
+.rl.mid{background:var(--gold-lt);color:var(--gold)}
+.rl.low{background:var(--jade-lt);color:var(--jade)}
+.ri-t{font-size:13px;font-weight:600;color:var(--ink);line-height:1.45;flex:1}
+.ri-status{font-size:11px;font-weight:600;flex-shrink:0;padding:2px 7px;border-radius:4px}
+.ri-status.acc{background:var(--jade-lt);color:var(--jade)}
+.ri-status.rej{background:#fdecea;color:var(--seal);border:1px solid #f5b8b3}
+.ri-arr{font-size:11px;color:var(--ink-4);transition:transform .2s;flex-shrink:0;margin-top:2px}
+.ri.open .ri-arr{transform:rotate(90deg)}
+.ri-bd{display:none;padding:0 13px 13px}
+.ri.open .ri-bd{display:block}
+
+/* ── DIFF VIEW ── */
+.diff-box{background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 13px;margin-bottom:10px;font-size:13px;line-height:1.7}
+.diff-box .lbl{font-size:11px;font-weight:700;color:var(--ink-4);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+.del-text{background:#ffeef0;color:#c0392b;text-decoration:line-through;border-radius:2px;padding:0 2px}
+.ins-text{background:#e6ffed;color:#1a6b4a;border-radius:2px;padding:0 2px;border-bottom:2px solid var(--jade)}
+.rb-val{font-size:13px;color:var(--ink-2);line-height:1.65;background:var(--bg-sub);padding:9px 11px;border-radius:6px;border-left:3px solid var(--border-s);margin-bottom:8px}
+.rb-val.law{border-left-color:var(--gold)}
+.rb-val.sug{border-left-color:var(--jade);color:var(--jade);font-style:italic}
+.rb-lbl{font-size:11px;font-weight:700;color:var(--ink-4);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px;margin-top:8px}
+
+/* ── LAW CARD ── */
+.law-card{border:1px solid #e8d9a0;border-radius:8px;overflow:hidden;margin-bottom:8px;margin-top:6px}
+.law-ref-row{background:var(--gold-lt);padding:8px 12px;font-size:13px;font-weight:600;color:var(--gold);border-bottom:1px solid #e8d9a0}
+.law-full-lbl{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-4);padding:8px 12px 3px;background:#fff}
+.law-full{padding:4px 12px 10px;font-size:13px;color:var(--ink-2);line-height:1.75;background:#fff;font-family:'Noto Serif SC',serif;border-bottom:1px solid #f0ece4}
+.law-guide-lbl{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);padding:8px 12px 3px;background:var(--blue-lt)}
+.law-guide{padding:4px 12px 10px;font-size:13px;color:var(--ink-2);line-height:1.72;background:var(--blue-lt)}
+
+/* ── ACCEPT / REJECT BUTTONS ── */
+.ri-actions{display:flex;gap:10px;margin-top:14px}
+/* 默认：空方框风格 */
+.btn-accept{
+  flex:1;padding:10px 14px;font-size:13px;font-weight:600;
+  background:#fff;color:var(--jade);
+  border:2px solid var(--jade);border-radius:8px;
+  cursor:pointer;font-family:inherit;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-accept .chk{
+  width:18px;height:18px;border-radius:4px;border:2px solid var(--jade);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;transition:all .2s;flex-shrink:0;background:#fff;
+}
+.btn-accept:hover:not(.active){background:var(--jade-lt);}
+/* 选中：整体填绿 */
+.btn-accept.active{background:var(--jade);color:#fff;border-color:var(--jade);}
+.btn-accept.active .chk{background:#fff;border-color:#fff;color:var(--jade);}
+
+.btn-reject{
+  flex:1;padding:10px 14px;font-size:13px;font-weight:600;
+  background:#fff;color:var(--seal);
+  border:2px solid var(--seal);border-radius:8px;
+  cursor:pointer;font-family:inherit;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-reject .chk{
+  width:18px;height:18px;border-radius:4px;border:2px solid var(--seal);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;transition:all .2s;flex-shrink:0;background:#fff;
+}
+.btn-reject:hover:not(.active){background:var(--seal-lt);}
+/* 选中：整体填红 */
+.btn-reject.active{background:var(--seal);color:#fff;border-color:var(--seal);}
+.btn-reject.active .chk{background:#fff;border-color:#fff;color:var(--seal);}
+
+/* 卡片整体状态色 */
+.ri.accepted{border-color:#6dbf9e;background:linear-gradient(135deg,#f0faf5 0%,#e6f7ef 100%);box-shadow:0 0 0 2px rgba(26,107,74,.12);}
+.ri.rejected{border-color:#e8a09a;background:linear-gradient(135deg,#fff5f4 0%,#fdecea 100%);box-shadow:0 0 0 2px rgba(192,57,43,.10);opacity:1;}
+
+/* ── TOAST 弹窗 ── */
+#toast{
+  position:fixed;top:72px;left:50%;transform:translateX(-50%) translateY(-12px);
+  z-index:500;pointer-events:none;
+  padding:11px 22px;border-radius:10px;
+  font-size:14px;font-weight:600;font-family:'Noto Serif SC',serif;
+  display:flex;align-items:center;gap:9px;
+  opacity:0;transition:opacity .22s,transform .22s;
+  box-shadow:0 6px 24px rgba(0,0,0,.15);white-space:nowrap;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#toast.acc{background:var(--jade);color:#fff;}
+#toast.rej{background:var(--seal);color:#fff;}
+
+/* ── MISSING / SUMMARY ── */
+.miss-list{list-style:none}
+.miss-item{display:flex;align-items:flex-start;gap:7px;padding:8px 10px;background:var(--gold-lt);border:1px solid #e8d9a0;border-radius:7px;margin-bottom:7px;font-size:13px;color:var(--ink-2);line-height:1.5}
+.miss-item::before{content:'⚠';font-size:13px;margin-top:1px;flex-shrink:0}
+.summary-box{background:var(--bg-sub);border:1px solid var(--border);border-radius:var(--r);padding:13px;font-size:13px;color:var(--ink-2);line-height:1.75}
+.disclaimer{margin-top:18px;padding:11px 13px;background:var(--bg-sub);border-radius:7px;font-size:11.5px;color:var(--ink-4);line-height:1.6;border:1px solid var(--border)}
+
+/* ── EXPORT BAR ── */
+.export-bar{display:flex;gap:8px;margin-top:14px;padding:14px;background:var(--bg-sub);border:1px solid var(--border);border-radius:var(--r)}
+.export-info{font-size:12.5px;color:var(--ink-3);flex:1;line-height:1.5}
+.export-info strong{color:var(--ink);display:block;margin-bottom:2px}
+.btn-export{padding:9px 18px;background:var(--ink);color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Serif SC',serif;letter-spacing:.03em;transition:opacity .15s;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.btn-export:hover{opacity:.82}
+.btn-export:disabled{opacity:.45;cursor:not-allowed}
+.acts{display:flex;gap:8px;margin-top:12px}
+.abtn{flex:1;padding:8px;font-size:12.5px;font-weight:500;border-radius:7px;cursor:pointer;border:1px solid var(--border);background:var(--bg-sub);color:var(--ink-2);font-family:inherit;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:5px}
+.abtn:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* ── MODAL ── */
+.overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(20,20,20,.55);backdrop-filter:blur(4px);align-items:center;justify-content:center}
+.overlay.show{display:flex}
+.modal{background:#fff;border-radius:var(--rl);padding:30px;width:460px;max-width:92vw;box-shadow:var(--sh-lg);animation:mIn .2s ease}
+@keyframes mIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+.modal h3{font-family:'Noto Serif SC',serif;font-size:18px;font-weight:700;margin-bottom:8px}
+.modal-desc{font-size:13px;color:var(--ink-3);line-height:1.6;margin-bottom:18px}
+.modal-lbl{display:block;font-size:11px;font-weight:700;color:var(--ink-4);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.modal-inp{width:100%;padding:10px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink);background:var(--bg-sub);border:1px solid var(--border);border-radius:7px;outline:none;transition:border-color .15s}
+.modal-inp:focus{border-color:var(--seal)}
+.modal-hint{font-size:11px;color:var(--ink-4);margin-top:5px}
+.modal-acts{display:flex;gap:10px;margin-top:18px}
+.btn-cancel{flex:1;padding:10px;background:var(--bg-sub);border:1px solid var(--border);border-radius:7px;font-size:14px;cursor:pointer;font-family:inherit;color:var(--ink-3);transition:all .15s}
+.btn-cancel:hover{color:var(--ink)}
+.btn-save{flex:2;padding:10px;background:var(--ink);color:#fff;border:none;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s}
+.btn-save:hover{opacity:.82}
+
+footer{text-align:center;padding:22px;font-size:12px;color:var(--ink-4);border-top:1px solid var(--border);margin-top:40px}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border-s);border-radius:3px}
+@media print{nav,.hero,.panel:first-child,footer,.acts,.btn-go,.export-bar,.batch-bar,.ri-actions{display:none!important}.grid{grid-template-columns:1fr!important}.panel{box-shadow:none;border:none}.ri-bd{display:block!important}}
+</style>
+</head>
+<body>
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo"><div class="logo-mark">契</div>契审</div>
+  <button class="btn-key" onclick="openModal()">
+    <span class="dot-s" id="dot"></span>
+    <span id="key-lbl">配置 API Key</span>
+  </button>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="badge">⚖ 《民法典》· 《劳动合同法》· 修订痕迹导出 · 扫描版OCR</div>
+  <h1>合同风险，<em>一览无余</em></h1>
+  <p>AI 逐条识别风险、生成修改建议，支持逐条接受或拒绝，一键导出带修订痕迹与批注的 Word 文档。</p>
+  <div class="chips">
+    <div class="chip">🔍 风险识别</div>
+    <div class="chip">✏ 修订建议</div>
+    <div class="chip">✅ 逐条接受/拒绝</div>
+    <div class="chip">📝 导出修订版 DOCX</div>
+    <div class="chip">💬 批注含法律依据</div>
+    <div class="chip">📄 扫描版 OCR</div>
+  </div>
+</section>
+
+<!-- WORKSPACE -->
+<div class="wrap">
+<div class="grid">
+
+<!-- ── LEFT: INPUT ── -->
+<div class="panel">
+  <div class="ph"><div class="ph-title"><span class="ph-dot"></span>合同输入</div></div>
+  <div class="pb">
+    <div class="tabs">
+      <button class="tab on" onclick="switchTab('text',this)">📝 粘贴文本</button>
+      <button class="tab" onclick="switchTab('file',this)">📁 上传文件</button>
+    </div>
+
+    <div id="tab-text">
+      <textarea class="cta" id="cta" placeholder="将合同文本粘贴于此……&#10;&#10;支持劳动合同、买卖合同、租赁合同、借款合同、服务合同等各类合同。" oninput="onInput()"></textarea>
+      <div class="wc"><span id="wc-txt">0 字</span><span>上限 50,000 字</span></div>
+    </div>
+
+    <div id="tab-file">
+      <div class="dropzone" id="dz" onclick="document.getElementById('fi').click()"
+        ondragover="dzOver(event)" ondragleave="dzLeave()" ondrop="dzDrop(event)">
+        <div class="dz-icon">📂</div>
+        <div class="dz-title">点击上传或拖拽文件</div>
+        <div class="dz-sub">文件仅在本地浏览器处理，不上传任何服务器</div>
+        <div class="fmt-badges">
+          <span class="fmt-badge docx">DOCX</span><span class="fmt-badge doc">DOC</span>
+          <span class="fmt-badge pdf">PDF</span><span class="fmt-badge xlsx">XLSX</span>
+          <span class="fmt-badge xlsx">XLS</span><span class="fmt-badge csv">CSV</span>
+        </div>
+      </div>
+      <input type="file" id="fi" accept=".docx,.doc,.pdf,.xlsx,.xls,.csv,.txt" onchange="onFileSel(event)">
+      <div class="file-loaded" id="fl">
+        <span id="fl-ico">📄</span>
+        <span class="fl-name" id="fl-name"></span>
+        <span class="fl-size" id="fl-size"></span>
+        <span class="fl-clear" onclick="clearFile()">✕ 清除</span>
+      </div>
+      <div class="parse-prog" id="pp">
+        <div class="pp-top">
+          <span class="pp-msg" id="pp-msg">解析中…</span>
+          <span class="ocr-badge">AI · OCR</span>
+        </div>
+        <div class="pp-bar-wrap"><div class="pp-bar" id="pp-bar"></div></div>
+        <div class="ocr-warn" id="ocr-warn"></div>
+      </div>
+    </div>
+
+    <div class="meta">
+      <div class="mf">
+        <label>合同类型</label>
+        <select id="ct">
+          <option value="auto">自动识别</option>
+          <option value="labor">劳动合同</option>
+          <option value="sale">买卖合同</option>
+          <option value="lease">租赁合同</option>
+          <option value="loan">借款合同</option>
+          <option value="service">服务合同</option>
+          <option value="guarantee">保证/担保合同</option>
+          <option value="realty">房屋买卖合同</option>
+          <option value="other">其他合同</option>
+        </select>
+      </div>
+      <div class="mf"><label>甲方名称</label><input type="text" id="pa" placeholder="甲方（可选）"></div>
+      <div class="mf"><label>乙方名称</label><input type="text" id="pb" placeholder="乙方（可选）"></div>
+    </div>
+
+    <span class="persp-lbl">审查立场</span>
+    <div class="persp-row">
+      <button class="pbtn on" onclick="setP(this,'甲方')">🅰 甲方</button>
+      <button class="pbtn" onclick="setP(this,'乙方')">🅱 乙方</button>
+      <button class="pbtn" onclick="setP(this,'中立第三方')">⚖ 中立</button>
+    </div>
+
+    <div class="err" id="err"></div>
+    <button class="btn-go" id="go-btn" onclick="doReview()">
+      <span>开始 AI 审核</span><span style="font-size:18px">→</span>
+    </button>
+  </div>
+</div>
+
+<!-- ── RIGHT: RESULT ── -->
+<div class="panel">
+  <div class="ph">
+    <div class="ph-title"><span class="ph-dot"></span>审核结果</div>
+    <div id="ph-counter" style="font-size:12px;color:var(--ink-4)"></div>
+  </div>
+  <div class="pb" id="rb">
+
+    <div class="r-ph" id="rph">
+      <div class="ico">⚖</div>
+      <p>配置 Kimi API Key 后<br>粘贴合同内容或上传文件<br>点击「开始 AI 审核」获取修订报告</p>
+    </div>
+
+    <div class="loading" id="loading">
+      <div class="spin"></div>
+      <ul class="steps">
+        <li id="s1"><span class="sdot"></span>解析合同文本…</li>
+        <li id="s2"><span class="sdot"></span>识别合同类型与当事人…</li>
+        <li id="s3"><span class="sdot"></span>检索适用法律条文…</li>
+        <li id="s4"><span class="sdot"></span>逐条风险扫描…</li>
+        <li id="s5"><span class="sdot"></span>生成修订建议…</li>
+        <li id="s6"><span class="sdot"></span>整理审核报告…</li>
+      </ul>
+    </div>
+
+    <div class="result-wrap" id="rw"></div>
+
+  </div>
+</div>
+
+</div><!-- /grid -->
+</div><!-- /wrap -->
+
+<!-- API KEY MODAL -->
+<div class="overlay" id="overlay" onclick="oClick(event)">
+  <div class="modal">
+    <h3>配置 Kimi API Key</h3>
+    <p class="modal-desc">前往 <a href="https://platform.moonshot.cn" target="_blank" style="color:var(--seal)">platform.moonshot.cn</a> 注册并获取 API Key。Key 仅保存在您的本地浏览器中，不上传任何服务器。</p>
+    <label class="modal-lbl">Moonshot API Key</label>
+    <input class="modal-inp" type="password" id="ki" placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx">
+    <div class="modal-hint">使用模型：moonshot-v1-128k（超长文本）· moonshot-v1-vision-preview（扫描 OCR）</div>
+    <div class="modal-acts">
+      <button class="btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn-save" onclick="saveKey()">保存</button>
+    </div>
+  </div>
+</div>
+
+<footer>契审 · AI合同审核平台 &nbsp;·&nbsp; 审核结果由 AI 辅助生成，仅供参考，不构成正式法律意见 &nbsp;·&nbsp; 请咨询执业律师获取专业建议</footer>
+
+<!-- PDF.js module init -->
+<script type="module">
+import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.worker.min.mjs';
+window.__pdfjs=pdfjsLib;
+</script>
+
+<script>
+// ════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════
+var _key='', _persp='甲方', _fileTxt='', _stepTimers=[];
+var _reviewData=null;   // parsed AI JSON
+var _decisions={};      // {idx: 'accepted'|'rejected'}
+var _contractName='合同';
+
+try{_key=localStorage.getItem('kimi_key')||'';}catch(e){}
+window.onload=function(){
+  if(_key){document.getElementById('dot').classList.add('ok');document.getElementById('key-lbl').textContent='API 已配置';}
+};
+
+// ════════════════════════════════════════════════
+//  UI HELPERS
+// ════════════════════════════════════════════════
+function switchTab(t,btn){
+  document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  document.getElementById('tab-text').style.display=t==='text'?'block':'none';
+  document.getElementById('tab-file').style.display=t==='file'?'block':'none';
+}
+function onInput(){
+  document.getElementById('wc-txt').textContent=document.getElementById('cta').value.length.toLocaleString()+' 字';
+}
+function setP(btn,v){
+  document.querySelectorAll('.pbtn').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');_persp=v;
+}
+function showErr(m){var e=document.getElementById('err');e.textContent=m;e.className='err show';}
+function hideErr(){document.getElementById('err').className='err';}
+function openModal(){document.getElementById('ki').value=_key;document.getElementById('overlay').classList.add('show');setTimeout(function(){document.getElementById('ki').focus();},100);}
+function closeModal(){document.getElementById('overlay').classList.remove('show');}
+function oClick(e){if(e.target===document.getElementById('overlay'))closeModal();}
+function saveKey(){
+  var k=document.getElementById('ki').value.trim();if(!k)return;
+  _key=k;try{localStorage.setItem('kimi_key',k);}catch(e){}
+  document.getElementById('dot').classList.add('ok');
+  document.getElementById('key-lbl').textContent='API 已配置';
+  closeModal();
+}
+window.switchTab=switchTab;window.onInput=onInput;window.setP=setP;
+window.openModal=openModal;window.closeModal=closeModal;window.oClick=oClick;window.saveKey=saveKey;
+
+// ════════════════════════════════════════════════
+//  FILE PARSING
+// ════════════════════════════════════════════════
+function dzOver(e){e.preventDefault();document.getElementById('dz').classList.add('over');}
+function dzLeave(){document.getElementById('dz').classList.remove('over');}
+function dzDrop(e){e.preventDefault();dzLeave();var f=e.dataTransfer.files[0];if(f)processFile(f);}
+function onFileSel(e){if(e.target.files[0])processFile(e.target.files[0]);}
+window.dzOver=dzOver;window.dzLeave=dzLeave;window.dzDrop=dzDrop;window.onFileSel=onFileSel;
+
+function fmtSz(b){if(b<1024)return b+' B';if(b<1048576)return (b/1024).toFixed(1)+' KB';return (b/1048576).toFixed(1)+' MB';}
+function showPP(msg,pct,ocr){
+  var pp=document.getElementById('pp');pp.classList.add('show');
+  if(ocr)pp.classList.add('ocr-mode');else pp.classList.remove('ocr-mode');
+  document.getElementById('pp-msg').textContent=msg;
+  document.getElementById('pp-bar').style.width=pct+'%';
+}
+function setOcrWarn(m){document.getElementById('ocr-warn').textContent=m||'';}
+function hidePP(){var pp=document.getElementById('pp');pp.classList.remove('show','ocr-mode');setOcrWarn('');}
+
+async function processFile(file){
+  var name=file.name, ext=name.split('.').pop().toLowerCase();
+  var fico={docx:'📝',doc:'📝',pdf:'📑',xlsx:'📊',xls:'📊',csv:'📋',txt:'📄'};
+  document.getElementById('fl-ico').textContent=fico[ext]||'📄';
+  document.getElementById('fl-name').textContent=name;
+  document.getElementById('fl-size').textContent=fmtSz(file.size);
+  document.getElementById('fl').classList.add('show');
+  document.getElementById('fi').value='';
+  _fileTxt='';hidePP();
+  if(file.size>20*1024*1024){showErr('文件超过 20MB');return;}
+  try{
+    showPP('读取文件…',10);
+    var ab=await file.arrayBuffer();
+    if(ext==='docx'){
+      showPP('解析 DOCX…',30);
+      var r=await mammoth.extractRawText({arrayBuffer:ab});
+      _fileTxt=r.value;showPP('解析完成 ✓',100);
+    }else if(ext==='doc'){
+      showPP('解析 DOC…',30);
+      try{var r2=await mammoth.extractRawText({arrayBuffer:ab});_fileTxt=r2.value;showPP('解析完成 ✓',100);}
+      catch(e2){
+        _fileTxt=new TextDecoder('utf-8',{fatal:false}).decode(ab).replace(/[^\u4e00-\u9fff\u3000-\u303f\uff00-\uffef\x20-\x7e\n\r]/g,' ').trim();
+        if(!_fileTxt||_fileTxt.length<20){showErr('旧版 .doc 内容不足，建议另存为 .docx 后重试');return;}
+        showPP('解析完成（降级）✓',100);
+      }
+    }else if(ext==='pdf'){
+      showPP('加载 PDF.js…',10);
+      var waited=0;
+      while(!window.__pdfjs&&waited<6000){await new Promise(function(r){setTimeout(r,100);});waited+=100;}
+      if(!window.__pdfjs)throw new Error('PDF.js 未加载，请刷新页面');
+      var pdfjs=window.__pdfjs;
+      showPP('解析 PDF…',20);
+      var pdf=await pdfjs.getDocument({data:new Uint8Array(ab)}).promise;
+      var total=pdf.numPages, pages=[], totalChars=0;
+      for(var i=1;i<=total;i++){
+        showPP('提取第 '+i+'/'+total+' 页…',20+Math.round(60*i/total));
+        var pg=await pdf.getPage(i), tc=await pg.getTextContent();
+        var pt='',lastY=null;
+        tc.items.forEach(function(item){
+          if(!item.str)return;
+          if(lastY!==null&&Math.abs(item.transform[5]-lastY)>5)pt+='\n';
+          pt+=item.str;lastY=item.transform[5];
+        });
+        pages.push(pt);totalChars+=pt.length;
+      }
+      var digTxt=pages.join('\n\n').replace(/\s{3,}/g,'\n\n').trim();
+      if(totalChars/Math.max(total,1)<30){
+        if(!_key){showErr('检测到扫描版 PDF，请先配置 API Key 以启用 AI·OCR');hidePP();return;}
+        _fileTxt=await ocrPdf(pdf,total);
+      }else{_fileTxt=digTxt;showPP('PDF 解析完成 ✓',100);}
+    }else if(ext==='xlsx'||ext==='xls'){
+      showPP('解析电子表格…',40);
+      var wb=XLSX.read(ab,{type:'array',cellText:true,cellDates:false});
+      var parts=[];
+      wb.SheetNames.forEach(function(sn){
+        var ws=wb.Sheets[sn],csv=XLSX.utils.sheet_to_csv(ws,{blankrows:false});
+        if(csv.trim())parts.push('【工作表：'+sn+'】\n'+csv);
+      });
+      _fileTxt=parts.join('\n\n');showPP('解析完成 ✓',100);
+    }else if(ext==='csv'){
+      _fileTxt=new TextDecoder('utf-8',{fatal:false}).decode(ab);showPP('解析完成 ✓',100);
+    }else{
+      _fileTxt=new TextDecoder('utf-8',{fatal:false}).decode(ab);showPP('读取完成 ✓',100);
+    }
+    _fileTxt=_fileTxt.replace(/\s{3,}/g,'\n\n').trim();
+    if(!_fileTxt||_fileTxt.length<20){
+      showErr('文件内容为空或无法识别，若为扫描件请确保已配置 API Key');_fileTxt='';return;
+    }
+    setTimeout(hidePP,1500);
+  }catch(ex){hidePP();showErr('文件解析失败：'+(ex.message||'未知错误'));_fileTxt='';}
+}
+
+async function ocrPdf(pdf,totalPages){
+  showPP('扫描版 PDF，启动 AI·OCR…',80,true);
+  setOcrWarn('正在调用 Kimi 视觉模型逐页识别，约 '+Math.ceil(totalPages/3)+' 次请求…');
+  var allTexts=[];
+  for(var b=1;b<=totalPages;b+=3){
+    var end=Math.min(b+2,totalPages);
+    showPP('🤖 OCR 第 '+b+'–'+end+'/'+totalPages+' 页…',80+Math.round(18*end/totalPages),true);
+    var contents=[];
+    for(var p=b;p<=end;p++){
+      var b64=await renderPage(pdf,p,1.8);
+      contents.push({type:'image_url',image_url:{url:'data:image/jpeg;base64,'+b64}});
+      contents.push({type:'text',text:'以上是第 '+p+' 页。'});
+    }
+    contents.push({type:'text',text:'请将上述各页中的全部文字完整提取，保持排版顺序，只输出原文内容，不添加任何解释。'});
+    var res=await fetch('https://api.moonshot.cn/v1/chat/completions',{
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+_key},
+      body:JSON.stringify({model:'moonshot-v1-vision-preview',max_tokens:4096,temperature:0,
+        messages:[{role:'system',content:'你是专业OCR系统，准确提取图片中的文字，保持原始排版，不做任何修改。'},
+                  {role:'user',content:contents}]})
+    });
+    var d=await res.json();
+    if(d.error)throw new Error('OCR API 错误：'+d.error.message);
+    allTexts.push(d.choices[0].message.content);
+  }
+  showPP('OCR 完成 ✓  共 '+totalPages+' 页',100,true);
+  setOcrWarn('✅ 已通过 Kimi 视觉模型完成扫描版 PDF 识别');
+  return allTexts.join('\n\n').replace(/\s{3,}/g,'\n\n').trim();
+}
+
+async function renderPage(pdf,n,scale){
+  var page=await pdf.getPage(n),vp=page.getViewport({scale:scale||1.5});
+  var canvas=document.createElement('canvas');
+  canvas.width=vp.width;canvas.height=vp.height;
+  await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
+  return canvas.toDataURL('image/jpeg',0.85).split(',')[1];
+}
+
+function clearFile(){
+  _fileTxt='';document.getElementById('fl').classList.remove('show');
+  document.getElementById('fi').value='';hidePP();
+}
+window.clearFile=clearFile;
+
+// ════════════════════════════════════════════════
+//  AI REVIEW
+// ════════════════════════════════════════════════
+var _stT=[0,900,1900,3100,4700,6500];
+function startSteps(){
+  _stepTimers.forEach(clearTimeout);_stepTimers=[];
+  for(var i=1;i<=6;i++){var e=document.getElementById('s'+i);e.className='';e.querySelector('.sdot').className='sdot';}
+  for(var j=1;j<=6;j++){(function(x){_stepTimers.push(setTimeout(function(){
+    if(x>1){var p=document.getElementById('s'+(x-1));if(p)p.className='done';}
+    var c=document.getElementById('s'+x);if(c)c.className='on';
+  },_stT[x-1]));})(j);}
+}
+function doneSteps(){_stepTimers.forEach(clearTimeout);for(var i=1;i<=6;i++){var e=document.getElementById('s'+i);if(e)e.className='done';}}
+
+async function doReview(){
+  hideErr();
+  var txt=document.getElementById('cta').value.trim()||_fileTxt;
+  if(!_key){showErr('请先配置 Kimi API Key');return;}
+  if(!txt||txt.length<30){showErr('请粘贴合同内容（≥30字）或上传文件');return;}
+  if(txt.length>50000){showErr('内容超过 50,000 字，请截取关键部分');return;}
+
+  var typeMap={auto:'（自动识别）',labor:'劳动合同',sale:'买卖合同',lease:'租赁合同',
+    loan:'借款合同',service:'服务合同',guarantee:'保证/担保合同',realty:'房屋买卖合同',other:'其他合同'};
+  var tl=typeMap[document.getElementById('ct').value]||'其他合同';
+  var pa=document.getElementById('pa').value, pb=document.getElementById('pb').value;
+
+  document.getElementById('go-btn').disabled=true;
+  document.getElementById('rph').style.display='none';
+  document.getElementById('loading').className='loading show';
+  document.getElementById('rw').className='result-wrap';
+  document.getElementById('ph-counter').textContent='';
+  _reviewData=null;_decisions={};startSteps();
+
+  try{
+    var res=await fetch('https://api.moonshot.cn/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+_key},
+      body:JSON.stringify({
+        model:'moonshot-v1-128k',max_tokens:8000,temperature:0.1,
+        messages:[
+          {role:'system',content:'你是一位执业15年以上的中国合同律师，精通《民法典》（2021施行版）《劳动合同法》及最高人民法院历年司法解释。你只输出要求的JSON格式，不输出任何其他内容。'},
+          {role:'user',content:buildPrompt(txt,tl,pa,pb,_persp)}
+        ]
+      })
+    });
+    var d=await res.json();
+    if(d.error)throw new Error(d.error.message||'API请求失败');
+    var raw=d.choices[0].message.content;
+    doneSteps();
+    setTimeout(function(){renderResult(raw,txt);},450);
+  }catch(ex){
+    doneSteps();
+    document.getElementById('loading').className='loading';
+    document.getElementById('rph').style.display='block';
+    var msg=ex.message||'未知错误';
+    if(msg.indexOf('401')>=0)msg='API Key 无效，请重新配置';
+    else if(msg.indexOf('429')>=0)msg='请求频率过高，请稍后重试';
+    else if(msg.indexOf('fetch')>=0||msg.indexOf('Failed')>=0)msg='网络请求失败，请检查网络连接';
+    showErr('审核失败：'+msg);
+    document.getElementById('go-btn').disabled=false;
+  }
+}
+window.doReview=doReview;
+
+function buildPrompt(txt,tl,pa,pb,persp){
+  var pi=(pa||pb)?'当事人：甲方「'+(pa||'未填写')+'」/ 乙方「'+(pb||'未填写')+'」\n':'';
+  return '请对以下合同进行全面专业的法律审核，并为每个风险项提供可直接替换原文的修订文本。\n\n【基本信息】\n合同类型：'+tl+'\n'+pi+'审查立场：代表'+persp+'进行审核\n\n【合同原文】\n'+txt+'\n\n【审核要求】\n严格按以下JSON格式返回，不输出任何其他内容：\n\n{\n  "contractName": "合同名称",\n  "contractType": "合同类型",\n  "score": 整数0-100,\n  "scoreSummary": "一句话评分说明",\n  "riskCount": {"high":数量,"mid":数量,"low":数量},\n  "risks": [\n    {\n      "level": "high或mid或low",\n      "title": "风险标题（15字内）",\n      "clause": "原文中需要修改的精确文字（原封不动摘录，20-100字）",\n      "revised": "建议的替换文字（可直接替换clause的完整新条款文字）",\n      "analysis": "风险分析（成因及法律后果，60-150字）",\n      "lawRef": "法条标识，格式：《法律名称》第X条（如《民法典》第705条）",\n      "lawFull": "该条文的完整法条原文，一字不差地引用（如：租赁期限不得超过二十年。超过二十年的，超出部分无效。租赁期限届满，当事人可以续订租赁合同；但是，约定的租赁期限自续订之日起不得超过二十年。）",\n      "lawGuide": "该条文在本合同中的具体适用指引：说明本条文如何适用于当前合同的具体情形，哪些约定触犯了该条文，触犯后的法律后果（如条款无效、可撤销、承担违约责任等），以及修改后如何符合该条文要求（100-200字）",\n      "suggestion": "修改理由（为什么这样改，30-80字）"\n    }\n  ],\n  "missingClauses": ["缺失条款说明"],\n  "summary": "总体审核意见（150-200字）"\n}\n\n重要说明：\n- clause 字段必须是合同原文中可以精确定位的文字片段，用于生成修订痕迹\n- revised 字段是替换 clause 后的新文字，与 clause 形成删除/插入对\n- lawFull 必须是该条文的法定原文，不得改写、缩略或意译，要完整准确\n- lawGuide 是结合本合同具体情形的实务适用分析，不是对条文的解释，要有针对性\n- 法律适用层级：①《民法典》2021施行版 ②《劳动合同法》及实施条例 ③最高人民法院司法解释（效力等同法律）\n- 劳动合同重点：试用期(第19条)、竞业限制(第23-24条)、违约金(第22-25条)、解除条件(第36-41条)\n- 借款合同重点：利率是否超LPR4倍、砍头息(第670条)、保证方式(第686条推定一般保证)\n- 租赁合同重点：20年上限(第705条)、优先购买权(第726条)、维修义务(第712条)\n- 房屋买卖：定金与违约金不可并用(第588条)\n- 重点标记格式条款(第496-497条)、显失公平(第151条)、权利义务严重不对等\n- JSON必须合法可解析，所有字符串内不得有未转义的引号和换行符（换行用\\n）';
+}
+
+// ════════════════════════════════════════════════
+//  RENDER RESULT
+// ════════════════════════════════════════════════
+function renderResult(raw,originalTxt){
+  document.getElementById('loading').className='loading';
+  var data;
+  try{
+    var c=raw.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    var s=c.indexOf('{'),e=c.lastIndexOf('}');
+    if(s<0||e<0)throw new Error('no json');
+    data=JSON.parse(c.slice(s,e+1));
+  }catch(ex){
+    document.getElementById('rw').innerHTML='<div class="summary-box" style="white-space:pre-wrap;font-size:12.5px;max-height:600px;overflow-y:auto">'+esc(raw)+'</div>';
+    document.getElementById('rw').className='result-wrap show';
+    document.getElementById('go-btn').disabled=false;
+    return;
+  }
+
+  _reviewData=data;
+  _reviewData._originalTxt=originalTxt;
+  _contractName=data.contractName||'合同';
+
+  // init decisions: risks with clause+revised default to pending
+  if(data.risks)data.risks.forEach(function(r,i){
+    _decisions[i]=(r.clause&&r.revised)?'pending':'nochange';
+  });
+
+  var sc=parseInt(data.score)||0;
+  var scCls=sc>=75?'l':sc>=50?'m':'h';
+  var lvM={high:'高危',mid:'中危',low:'低危'};
+  var rc=data.riskCount||{};
+
+  // overview
+  var html='<div class="ov">'+
+    '<div class="ov-head">'+
+      '<div><div class="ov-name">'+esc(data.contractName||'合同审核报告')+'</div>'+
+      '<div class="ov-sub">'+esc(data.contractType||'')+(data.contractType?' · ':'')+new Date().toLocaleDateString('zh-CN')+'</div></div>'+
+      '<div><div class="score '+scCls+'">'+sc+'<span style="font-size:13px;font-weight:400"> 分</span></div><div class="score-lbl">综合评分</div></div>'+
+    '</div>'+
+    '<div class="stats">'+
+      '<div class="st d"><div class="st-n">'+(rc.high||0)+'</div><div class="st-l">🔴 高危</div></div>'+
+      '<div class="st w"><div class="st-n">'+(rc.mid||0)+'</div><div class="st-l">🟡 中危</div></div>'+
+      '<div class="st g"><div class="st-n">'+(rc.low||0)+'</div><div class="st-l">🟢 低危</div></div>'+
+    '</div>'+
+    (data.scoreSummary?'<div class="ov-tip">💬 '+esc(data.scoreSummary)+'</div>':'')+
+  '</div>';
+
+  // count actionable risks
+  var actionable=(data.risks||[]).filter(function(r){return r.clause&&r.revised;}).length;
+
+  // batch bar
+  if(actionable>0){
+    html+='<div class="batch-bar" id="batch-bar">'+
+      '<div class="batch-info">共 <span id="pending-count">'+actionable+'</span> 条修订建议待处理</div>'+
+      '<div class="batch-btns">'+
+        '<button class="bb accept-all" onclick="acceptAll()">✅ 全部接受</button>'+
+        '<button class="bb reject-all" onclick="rejectAll()">✕ 全部拒绝</button>'+
+      '</div>'+
+    '</div>';
+  }
+
+  // risk items
+  html+='<div class="sec">🔎 风险详情与修订建议</div>';
+  if(data.risks&&data.risks.length>0){
+    data.risks.forEach(function(r,i){
+      var hasRev=!!(r.clause&&r.revised);
+      html+='<div class="ri" id="ri-'+i+'">'+
+        '<div class="ri-hd" onclick="toggleRi('+i+')">'+
+          '<span class="rl '+(r.level||'low')+'">'+(lvM[r.level]||'低危')+'</span>'+
+          '<span class="ri-t">'+esc(r.title)+'</span>'+
+          (hasRev?'<span class="ri-status" id="rs-'+i+'">待处理</span>':'')+
+          '<span class="ri-arr">&#9658;</span>'+
+        '</div>'+
+        '<div class="ri-bd" id="rb-'+i+'">'+
+          // diff view
+          (hasRev?
+            '<div class="diff-box">'+
+              '<div class="lbl">修订对比</div>'+
+              '<span class="del-text">'+esc(r.clause)+'</span>'+
+              ' <span style="color:var(--ink-4);font-size:12px">→</span> '+
+              '<span class="ins-text">'+esc(r.revised)+'</span>'+
+            '</div>'
+          :
+            (r.clause?'<div class="rb-lbl">相关条款</div><div class="rb-val" style="border-left-color:var(--seal)">'+esc(r.clause)+'</div>':'')
+          )+
+          '<div class="rb-lbl">风险分析</div><div class="rb-val">'+esc(r.analysis)+'</div>'+
+          (r.lawRef||r.law?'<div class="rb-lbl">法律依据</div>'+
+            '<div class="law-card">'+
+              '<div class="law-ref-row">📖 '+(esc(r.lawRef||r.law))+'</div>'+
+              (r.lawFull?'<div class="law-full-lbl">条文全文</div><div class="law-full">'+esc(r.lawFull)+'</div>':'')+
+              (r.lawGuide?'<div class="law-guide-lbl">适用指引</div><div class="law-guide">'+esc(r.lawGuide)+'</div>':'')+
+            '</div>'
+          :'')+
+          (r.suggestion?'<div class="rb-lbl">修改理由</div><div class="rb-val sug">'+esc(r.suggestion)+'</div>':'')+
+          // action buttons
+          (hasRev?
+            '<div class="ri-actions">'+
+              '<button class="btn-accept" id="ba-'+i+'" onclick="decide('+i+',\'accepted\')"><span class="chk" id="chk-a-'+i+'"></span>接受修改</button>'+
+              '<button class="btn-reject" id="br-'+i+'" onclick="decide('+i+',\'rejected\')"><span class="chk" id="chk-r-'+i+'"></span>拒绝修改</button>'+
+            '</div>'
+          :'')+
+        '</div>'+
+      '</div>';
+    });
+  }else{
+    html+='<p style="font-size:13px;color:var(--ink-4);text-align:center;padding:20px">✅ 未发现明显风险条款</p>';
+  }
+
+  // missing
+  if(data.missingClauses&&data.missingClauses.length>0){
+    html+='<div class="sec">⚠ 缺失条款提醒</div><ul class="miss-list">'+
+      data.missingClauses.map(function(m){return '<li class="miss-item">'+esc(m)+'</li>';}).join('')+
+    '</ul>';
+  }
+
+  // summary
+  html+='<div class="sec">📋 总体审核意见</div>'+
+    '<div class="summary-box">'+esc(data.summary||'')+'</div>';
+
+  // export bar
+  html+='<div class="export-bar">'+
+    '<div class="export-info">'+
+      '<strong>📝 导出修订版 Word 文档</strong>'+
+      '接受的修改将以修订痕迹（删除线 + 下划线）呈现，每处附批注说明风险与法律依据，可在 Word 中逐条审阅。'+
+    '</div>'+
+    '<button class="btn-export" id="export-btn" onclick="exportDocx()">⬇ 导出 DOCX</button>'+
+  '</div>';
+
+  html+='<div class="disclaimer">⚠ 本报告由 Kimi AI 辅助生成，仅供参考，不构成正式法律意见。合同签署前，请咨询具有执业资格的律师进行专业审查。</div>';
+  html+='<div class="acts"><button class="abtn" onclick="window.print()">🖨 打印</button><button class="abtn" onclick="resetAll()">⟳ 重新审核</button></div>';
+
+  document.getElementById('rw').innerHTML=html;
+  document.getElementById('rw').className='result-wrap show';
+  document.getElementById('go-btn').disabled=false;
+  updateCounter();
+  // auto-expand first risk
+  if(data.risks&&data.risks.length>0)toggleRi(0);
+  setTimeout(function(){document.getElementById('rw').scrollIntoView({behavior:'smooth',block:'start'});},100);
+}
+
+// ════════════════════════════════════════════════
+//  DECISION LOGIC
+// ════════════════════════════════════════════════
+var _toastTimer=null;
+function showToast(msg,type){
+  var t=document.getElementById('toast');
+  if(!t)return;
+  clearTimeout(_toastTimer);
+  t.textContent=msg;
+  t.className='';
+  // force reflow
+  void t.offsetWidth;
+  t.className='show '+type;
+  _toastTimer=setTimeout(function(){t.className='';},2200);
+}
+
+function decide(idx,decision){
+  _decisions[idx]=decision;
+  var ri=document.getElementById('ri-'+idx);
+  var rs=document.getElementById('rs-'+idx);
+  var ba=document.getElementById('ba-'+idx);
+  var br=document.getElementById('br-'+idx);
+  var ca=document.getElementById('chk-a-'+idx);
+  var cr=document.getElementById('chk-r-'+idx);
+  if(decision==='accepted'){
+    ri.classList.add('accepted');ri.classList.remove('rejected');
+    if(rs){rs.textContent='✓ 已接受';rs.className='ri-status acc';}
+    if(ba)ba.classList.add('active');
+    if(br)br.classList.remove('active');
+    if(ca)ca.textContent='✓';
+    if(cr)cr.textContent='';
+    showToast('✓ 已接受修改','acc');
+  }else{
+    ri.classList.add('rejected');ri.classList.remove('accepted');
+    if(rs){rs.textContent='✕ 已拒绝';rs.className='ri-status rej';}
+    if(br)br.classList.add('active');
+    if(ba)ba.classList.remove('active');
+    if(cr)cr.textContent='✕';
+    if(ca)ca.textContent='';
+    showToast('✕ 已拒绝修改','rej');
+  }
+  updateCounter();
+}
+window.decide=decide;
+
+function acceptAll(){
+  if(!_reviewData||!_reviewData.risks)return;
+  _reviewData.risks.forEach(function(r,i){if(r.clause&&r.revised)decide(i,'accepted');});
+}
+function rejectAll(){
+  if(!_reviewData||!_reviewData.risks)return;
+  _reviewData.risks.forEach(function(r,i){if(r.clause&&r.revised)decide(i,'rejected');});
+}
+window.acceptAll=acceptAll;window.rejectAll=rejectAll;
+
+function updateCounter(){
+  if(!_reviewData||!_reviewData.risks)return;
+  var total=0,accepted=0,rejected=0,pending=0;
+  _reviewData.risks.forEach(function(r,i){
+    if(r.clause&&r.revised){
+      total++;
+      var d=_decisions[i];
+      if(d==='accepted')accepted++;
+      else if(d==='rejected')rejected++;
+      else pending++;
+    }
+  });
+  var el=document.getElementById('pending-count');
+  if(el)el.textContent=pending;
+  document.getElementById('ph-counter').textContent=
+    '✅'+accepted+' / ✕'+rejected+' / ⏳'+pending;
+}
+
+function toggleRi(i){
+  var ri=document.getElementById('ri-'+i);
+  if(!ri)return;
+  var bd=document.getElementById('rb-'+i);
+  ri.classList.toggle('open');
+}
+window.toggleRi=toggleRi;
+
+// ════════════════════════════════════════════════
+//  DOCX EXPORT ENGINE
+//  生成带 Track Changes（w:ins/w:del）+ 批注（w:comment）的 Word 文件
+// ════════════════════════════════════════════════
+async function exportDocx(){
+  if(!_reviewData)return;
+  var btn=document.getElementById('export-btn');
+  btn.disabled=true;btn.textContent='⏳ 生成中…';
+
+  try{
+    var originalTxt=_reviewData._originalTxt||document.getElementById('cta').value.trim()||_fileTxt||'';
+    var risks=_reviewData.risks||[];
+    var today=new Date().toISOString().slice(0,10);
+    var authorName='契审AI';
+
+    // ── 1. 构建修订段落 ──
+    // 将原文按接受的修订项进行替换，生成段落数组
+    // 每段落含：普通文字 / w:del 删除 / w:ins 插入 / 批注引用
+    var paragraphs=buildRevisionParagraphs(originalTxt,risks,_decisions,authorName,today);
+
+    // ── 2. 构建批注 XML ──
+    var commentsXml=buildCommentsXml(risks,_decisions,authorName,today);
+
+    // ── 3. 组装 DOCX ZIP ──
+    var zip=new JSZip();
+
+    // [Content_Types].xml
+    zip.file('[Content_Types].xml',contentTypesXml());
+    // _rels/.rels
+    zip.folder('_rels').file('.rels',rootRelsXml());
+    // word/
+    var wordFolder=zip.folder('word');
+    wordFolder.file('document.xml',documentXml(paragraphs,_reviewData.contractName||'合同审核'));
+    wordFolder.file('comments.xml',commentsXml);
+    wordFolder.file('styles.xml',stylesXml());
+    wordFolder.file('settings.xml',settingsXml());
+    wordFolder.folder('_rels').file('document.xml.rels',documentRelsXml());
+
+    // ── 4. 下载 ──
+    var blob=await zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url;
+    a.download=(_contractName||'合同')+'_修订版_'+today+'.docx';
+    document.body.appendChild(a);a.click();
+    document.body.removeChild(a);URL.revokeObjectURL(url);
+
+    btn.disabled=false;btn.innerHTML='⬇ 导出 DOCX';
+  }catch(ex){
+    btn.disabled=false;btn.innerHTML='⬇ 导出 DOCX';
+    alert('导出失败：'+ex.message);
+  }
+}
+window.exportDocx=exportDocx;
+
+// ── 构建段落数组 ──
+// 返回 [{type:'text',text}, {type:'revision',del,ins,commentId,law,analysis,suggestion}]
+function buildRevisionParagraphs(originalTxt,risks,decisions,author,date){
+  // 收集所有「已接受」或「已拒绝但有clause」的修订，按在原文中出现的位置排序
+  var revisions=[];
+  risks.forEach(function(r,i){
+    if(!r.clause||!r.revised)return;
+    var pos=originalTxt.indexOf(r.clause);
+    if(pos<0)return; // 在原文中找不到，跳过
+    revisions.push({idx:i,pos:pos,len:r.clause.length,del:r.clause,ins:r.revised,
+      decision:decisions[i]||'pending',
+      law:r.law||'',analysis:r.analysis||'',suggestion:r.suggestion||'',title:r.title||''});
+  });
+  // 按位置排序，去除重叠
+  revisions.sort(function(a,b){return a.pos-b.pos;});
+  var filtered=[],lastEnd=0;
+  revisions.forEach(function(rv){
+    if(rv.pos>=lastEnd){filtered.push(rv);lastEnd=rv.pos+rv.len;}
+  });
+
+  // 为每个修订分配 commentId（全部修订都添加批注，无论接受/拒绝）
+  filtered.forEach(function(rv,ci){rv.commentId=ci+1;});
+
+  // 将原文切分为 segments
+  var segments=[];
+  var cursor=0;
+  filtered.forEach(function(rv){
+    if(rv.pos>cursor)segments.push({type:'text',text:originalTxt.slice(cursor,rv.pos)});
+    segments.push({type:'revision',del:rv.del,ins:rv.ins,
+      decision:rv.decision,commentId:rv.commentId,
+      law:rv.law,analysis:rv.analysis,suggestion:rv.suggestion,title:rv.title});
+    cursor=rv.pos+rv.len;
+  });
+  if(cursor<originalTxt.length)segments.push({type:'text',text:originalTxt.slice(cursor)});
+  return segments;
+}
+
+// ── XML 转义 ──
+function xmlEsc(s){
+  if(!s)return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+}
+
+// ── 将 segments 转为 word/document.xml ──
+function documentXml(segments,title){
+  // 将文本按换行分为段落
+  var paraXmlParts=[];
+
+  // 标题段
+  paraXmlParts.push(
+    '<w:p><w:pPr><w:jc w:val="center"/><w:pStyle w:val="Heading1"/></w:pPr>'+
+    '<w:r><w:rPr><w:b/><w:sz w:val="36"/><w:szCs w:val="36"/></w:rPr>'+
+    '<w:t>'+xmlEsc(title)+' — 修订版</w:t></w:r></w:p>'
+  );
+
+  // 合并所有 segments 为 runs，再按 \n 分段
+  var allRuns=[];
+  segments.forEach(function(seg){
+    if(seg.type==='text'){
+      // 普通文字，可能含换行
+      seg.text.split('\n').forEach(function(line,li){
+        if(li>0)allRuns.push({type:'break'});
+        if(line)allRuns.push({type:'text',text:line});
+      });
+    }else{
+      // revision run
+      allRuns.push({type:'revision',del:seg.del,ins:seg.ins,
+        decision:seg.decision,commentId:seg.commentId,
+        law:seg.law,analysis:seg.analysis,suggestion:seg.suggestion,title:seg.title});
+    }
+  });
+
+  // 按 break 切段落
+  var currentPara=[];
+  var paras=[currentPara];
+  allRuns.forEach(function(run){
+    if(run.type==='break'){currentPara=[];paras.push(currentPara);}
+    else currentPara.push(run);
+  });
+
+  paras.forEach(function(para){
+    if(para.length===0){paraXmlParts.push('<w:p><w:r><w:t> </w:t></w:r></w:p>');return;}
+    var runsXml='';
+    para.forEach(function(run){
+      if(run.type==='text'){
+        if(!run.text)return;
+        runsXml+='<w:r><w:t xml:space="preserve">'+xmlEsc(run.text)+'</w:t></w:r>';
+      }else if(run.type==='revision'){
+        var cid=run.commentId;
+        // 批注开始标记
+        runsXml+='<w:commentRangeStart w:id="'+cid+'"/>';
+
+        if(run.decision==='accepted'){
+          // 接受：显示删除原文 + 插入新文
+          runsXml+=
+            '<w:del w:id="'+(cid*10)+'" w:author="契审AI" w:date="'+new Date().toISOString()+'">'+
+              '<w:r><w:rPr><w:rStyle w:val="Deleted"/></w:rPr>'+
+              '<w:delText xml:space="preserve">'+xmlEsc(run.del)+'</w:delText></w:r>'+
+            '</w:del>'+
+            '<w:ins w:id="'+(cid*10+1)+'" w:author="契审AI" w:date="'+new Date().toISOString()+'">'+
+              '<w:r><w:rPr><w:rStyle w:val="Inserted"/></w:rPr>'+
+              '<w:t xml:space="preserve">'+xmlEsc(run.ins)+'</w:t></w:r>'+
+            '</w:ins>';
+        }else if(run.decision==='rejected'){
+          // 拒绝：保留原文，但仍添加批注（标注为"已拒绝"）
+          runsXml+='<w:r><w:rPr><w:color w:val="666666"/></w:rPr>'+
+            '<w:t xml:space="preserve">'+xmlEsc(run.del)+'</w:t></w:r>';
+        }else{
+          // 待处理：原文 + 插入建议（用不同颜色）
+          runsXml+='<w:r><w:t xml:space="preserve">'+xmlEsc(run.del)+'</w:t></w:r>';
+        }
+
+        // 批注结束标记 + 引用
+        runsXml+=
+          '<w:commentRangeEnd w:id="'+cid+'"/>'+
+          '<w:r><w:rPr><w:rStyle w:val="CommentReference"/></w:rPr>'+
+          '<w:commentReference w:id="'+cid+'"/></w:r>';
+      }
+    });
+    paraXmlParts.push('<w:p>'+runsXml+'</w:p>');
+  });
+
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'+
+    '<w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"'+
+    ' xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"'+
+    ' xmlns:o="urn:schemas-microsoft-com:office:office"'+
+    ' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"'+
+    ' xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math"'+
+    ' xmlns:v="urn:schemas-microsoft-com:vml"'+
+    ' xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing"'+
+    ' xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"'+
+    ' xmlns:w10="urn:schemas-microsoft-com:office:word"'+
+    ' xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"'+
+    ' xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml"'+
+    ' xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup"'+
+    ' xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk"'+
+    ' xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml"'+
+    ' xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"'+
+    ' mc:Ignorable="w14 wp14">\n'+
+    '<w:body>'+paraXmlParts.join('\n')+'</w:body></w:document>';
+}
+
+// ── 构建 comments.xml ──
+function buildCommentsXml(risks,decisions,author,date){
+  var commentItems='';
+  var ci=1;
+  risks.forEach(function(r,i){
+    if(!r.clause||!r.revised)return;
+    var dec=decisions[i]||'pending';
+    var decLabel=dec==='accepted'?'【已接受修改】':dec==='rejected'?'【已拒绝修改】':'【待处理】';
+    var lines=[];
+    lines.push(decLabel);
+    lines.push('');
+    lines.push('▌ 风险标题：'+(r.title||''));
+    lines.push('');
+    lines.push('▶ 修改理由：'+(r.suggestion||r.analysis||''));
+    lines.push('');
+    // 法律依据三层
+    var lawRef=r.lawRef||r.law||'';
+    if(lawRef){
+      lines.push('━━━━━━━━━━━━━━━━━━━━━━');
+      lines.push('⚖ 法律依据：'+lawRef);
+      lines.push('');
+    }
+    if(r.lawFull){
+      lines.push('【条文全文】');
+      // 条文全文可能较长，按句号分行更易阅读
+      r.lawFull.split('。').forEach(function(s){
+        var t=s.trim();
+        if(t)lines.push(t+'。');
+      });
+      lines.push('');
+    }
+    if(r.lawGuide){
+      lines.push('【适用指引】');
+      lines.push(r.lawGuide);
+      lines.push('');
+    }
+    lines.push('━━━━━━━━━━━━━━━━━━━━━━');
+    lines.push('✏ 建议改为：');
+    lines.push(r.revised||'');
+    // 将每行转为 w:p
+    var paras=lines.map(function(line){
+      return '<w:p><w:r><w:t xml:space="preserve">'+xmlEsc(line)+'</w:t></w:r></w:p>';
+    });
+    commentItems+='<w:comment w:id="'+ci+'" w:author="'+xmlEsc(author)+'" w:date="'+date+'T00:00:00Z" w:initials="AI">'+paras.join('')+'</w:comment>';
+    ci++;
+  });
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'+
+    '<w:comments xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"'+
+    ' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'+
+    commentItems+'</w:comments>';
+}
+
+// ── DOCX 骨架 XML ──
+function contentTypesXml(){
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'+
+  '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
+  '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'+
+  '<Default Extension="xml" ContentType="application/xml"/>'+
+  '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'+
+  '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>'+
+  '<Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>'+
+  '<Override PartName="/word/comments.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.comments+xml"/>'+
+  '</Types>';
+}
+function rootRelsXml(){
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'+
+  '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+  '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'+
+  '</Relationships>';
+}
+function documentRelsXml(){
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'+
+  '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+  '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'+
+  '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings" Target="settings.xml"/>'+
+  '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments" Target="comments.xml"/>'+
+  '</Relationships>';
+}
+function settingsXml(){
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'+
+  '<w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'+
+  '<w:trackChanges/>'+
+  '<w:defaultTabStop w:val="840"/>'+
+  '<w:compat><w:compatSetting w:name="compatibilityMode" w:uri="http://schemas.microsoft.com/office/word" w:val="15"/></w:compat>'+
+  '</w:settings>';
+}
+function stylesXml(){
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'+
+  '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"'+
+  ' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'+
+  '<w:docDefaults><w:rPrDefault><w:rPr>'+
+  '<w:rFonts w:ascii="宋体" w:eastAsia="宋体" w:hAnsi="Times New Roman" w:cs="Times New Roman"/>'+
+  '<w:sz w:val="24"/><w:szCs w:val="24"/>'+
+  '</w:rPr></w:rPrDefault></w:docDefaults>'+
+  // Deleted style（红色删除线）
+  '<w:style w:type="character" w:styleId="Deleted">'+
+  '<w:name w:val="Deleted"/><w:rPr>'+
+  '<w:color w:val="FF0000"/>'+
+  '<w:strike/>'+
+  '</w:rPr></w:style>'+
+  // Inserted style（深绿色下划线）
+  '<w:style w:type="character" w:styleId="Inserted">'+
+  '<w:name w:val="Inserted"/><w:rPr>'+
+  '<w:color w:val="1a6b4a"/>'+
+  '<w:u w:val="single"/>'+
+  '</w:rPr></w:style>'+
+  // CommentReference
+  '<w:style w:type="character" w:styleId="CommentReference">'+
+  '<w:name w:val="Comment Reference"/></w:style>'+
+  // Heading1
+  '<w:style w:type="paragraph" w:styleId="Heading1">'+
+  '<w:name w:val="heading 1"/><w:basedOn w:val="Normal"/>'+
+  '<w:rPr><w:b/><w:sz w:val="32"/><w:szCs w:val="32"/></w:rPr></w:style>'+
+  '</w:styles>';
+}
+
+// ════════════════════════════════════════════════
+//  MISC
+// ════════════════════════════════════════════════
+function esc(s){
+  if(!s)return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function resetAll(){
+  document.getElementById('rw').className='result-wrap';
+  document.getElementById('rph').style.display='block';
+  document.getElementById('cta').value='';onInput();
+  clearFile();hideErr();
+  document.getElementById('ph-counter').textContent='';
+  document.getElementById('go-btn').disabled=false;
+  _reviewData=null;_decisions={};
+}
+window.resetAll=resetAll;
+</script>
+</body>
+</html>
